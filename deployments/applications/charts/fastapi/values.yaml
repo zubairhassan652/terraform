@@ -1,0 +1,25 @@
+replicaCount: 1
+
+image:
+  repository: zubairhassan652/fastapi  # ← your Docker Hub image
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000  # FastAPI default port
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  host: fastapi.example.com
+  path: /
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"

@@ -9,3 +9,6 @@
 
 # Buid the image djagno app
 ` docker build -t fastapi-app:latest .`
+
+# Remove minikube
+`minikube delete --all --purge`

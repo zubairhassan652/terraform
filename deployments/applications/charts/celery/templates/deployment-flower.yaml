@@ -27,7 +27,7 @@ spec:
                   key: REDIS_URL
           command: ["/bin/sh", "-c"]
           args:
-            - "celery -A {{ .Values.celeryApp }} flower --port={{ .Values.flower.port }} --broker=$REDIS_URL --backend=$REDIS_URL"
+            - "celery -A {{ .Values.celeryApp }} flower --port={{ .Values.flower.port }} --broker=$REDIS_URL"
           resources:
             requests:
               memory: {{ .Values.flower.resources.requests.memory }}

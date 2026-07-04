@@ -9,7 +9,7 @@ spec:
 
   source:
     repoURL: https://github.com/zubairhassan652/terraform
-    targetRevision: master
+    targetRevision: HEAD
     path: deployments/applications/charts/celery
     helm:
       valueFiles:

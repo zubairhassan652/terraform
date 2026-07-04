@@ -1,0 +1,27 @@
+# celery-argocd-app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: celery
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/zubairhassan652/terraform
+    targetRevision: master
+    path: deployments/applications/charts/celery
+    helm:
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

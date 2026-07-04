@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-worker
+  labels:
+    app: {{ .Release.Name }}-worker
+spec:
+  {{- if not .Values.keda.enabled }}
+  replicas: {{ .Values.worker.replicaCount }}   # ← only set if KEDA disabled
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-worker
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-worker
+    spec:
+      containers:
+        - name: celery-worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: REDIS_URL
+          command:
+            - celery
+            - -A
+            - {{ .Values.celeryApp }}
+            - worker
+            - --loglevel={{ .Values.worker.logLevel }}
+            - --concurrency={{ .Values.worker.concurrency }}
+          resources:
+            requests:
+              memory: {{ .Values.worker.resources.requests.memory }}
+              cpu: {{ .Values.worker.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.worker.resources.limits.memory }}
+              cpu: {{ .Values.worker.resources.limits.cpu }}
+          livenessProbe:
+            exec:
+              command:
+                - celery
+                - -A
+                - {{ .Values.celeryApp }}
+                - inspect
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 10

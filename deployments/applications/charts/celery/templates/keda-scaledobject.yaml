@@ -1,0 +1,25 @@
+{{- if .Values.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ .Release.Name }}-worker-scaledobject
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-worker       # ← targets celery worker
+
+  minReplicaCount: {{ .Values.keda.minReplicas }}
+  maxReplicaCount: {{ .Values.keda.maxReplicas }}
+  pollingInterval: {{ .Values.keda.pollingInterval }}
+  cooldownPeriod: {{ .Values.keda.cooldownPeriod }}
+
+  triggers:
+    - type: redis                           # ← redis trigger
+      metadata:
+        address: {{ .Values.redis.url | trimPrefix "redis://" }}
+        listName: {{ .Values.keda.queue }}  # ← celery queue name in Redis
+        listLength: "{{ .Values.keda.queueLength }}"
+        enableTLS: "false"
+{{- end }}

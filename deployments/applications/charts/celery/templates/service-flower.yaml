@@ -1,0 +1,16 @@
+{{- if .Values.flower.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-flower-service
+  labels:
+    app: {{ .Release.Name }}-flower
+spec:
+  selector:
+    app: {{ .Release.Name }}-flower
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: {{ .Values.flower.port }}
+  type: ClusterIP
+{{- end }}

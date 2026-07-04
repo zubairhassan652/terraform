@@ -1,0 +1,64 @@
+image:
+  repository: zubairhassan652/fastapi
+  tag: latest
+  pullPolicy: Always
+
+redis:
+  url: redis://redis-master.argocd.svc.cluster.local:6379/0
+
+celeryApp: celery_app
+taskModule: tasks
+
+worker:
+  replicaCount: 2
+  concurrency: 2
+  logLevel: info
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+beat:
+  enabled: true
+  replicaCount: 1
+  logLevel: info
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
+
+flower:
+  enabled: true
+  replicaCount: 1
+  port: 5555
+  logLevel: info
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
+
+secret:
+  name: redis-secret
+
+# ── HPA (CPU based) ──────────────────────────────────────────
+hpa:
+  enabled: false           # disable if using KEDA
+
+# ── KEDA (queue based — recommended) ─────────────────────────
+keda:
+  enabled: true
+  minReplicas: 1           # scale to 0 when no tasks!
+  maxReplicas: 10
+  pollingInterval: 15      # check queue every 15 seconds
+  cooldownPeriod: 30       # wait 30s before scaling down
+  queueLength: 5           # scale up when queue has > 5 tasks
+  queue: celery            # default celery queue name in Redis

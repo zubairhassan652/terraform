@@ -1,0 +1,51 @@
+{{- if .Values.flower.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-flower
+  labels:
+    app: {{ .Release.Name }}-flower
+spec:
+  replicas: {{ .Values.flower.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-flower
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-flower
+    spec:
+      containers:
+        - name: flower
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.flower.port }}
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: REDIS_URL
+          command:
+            - celery
+            - -A
+            - {{ .Values.celeryApp }}
+            - flower
+            - --port={{ .Values.flower.port }}
+            - --broker=$(REDIS_URL)
+            - --loglevel={{ .Values.flower.logLevel }}
+          resources:
+            requests:
+              memory: {{ .Values.flower.resources.requests.memory }}
+              cpu: {{ .Values.flower.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.flower.resources.limits.memory }}
+              cpu: {{ .Values.flower.resources.limits.cpu }}
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: {{ .Values.flower.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+{{- end }}

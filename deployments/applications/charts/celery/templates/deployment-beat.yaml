@@ -1,0 +1,41 @@
+{{- if .Values.beat.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-beat
+  labels:
+    app: {{ .Release.Name }}-beat
+spec:
+  replicas: {{ .Values.beat.replicaCount }}   # always 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-beat
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-beat
+    spec:
+      containers:
+        - name: celery-beat
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: REDIS_URL
+          command:
+            - celery
+            - -A
+            - {{ .Values.celeryApp }}
+            - beat
+            - --loglevel={{ .Values.beat.logLevel }}
+          resources:
+            requests:
+              memory: {{ .Values.beat.resources.requests.memory }}
+              cpu: {{ .Values.beat.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.beat.resources.limits.memory }}
+              cpu: {{ .Values.beat.resources.limits.cpu }}
+{{- end }}

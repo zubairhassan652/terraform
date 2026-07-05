@@ -1,20 +1,23 @@
 replicaCount: 1
 
 image:
-  repository: zubairhassan652/fastapi  # ← your Docker Hub image
+  repository: zubairhassan652/fastapi
   tag: latest
   pullPolicy: Always
 
 service:
   type: ClusterIP
   port: 80
-  targetPort: 8000  # FastAPI default port
+  targetPort: 8000
 
 ingress:
   enabled: true
   ingressClassName: nginx
   host: fastapi.example.com
   path: /
+  pathType: Prefix
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
 
 resources:
   requests:
@@ -23,3 +26,13 @@ resources:
   limits:
     memory: "256Mi"
     cpu: "200m"
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUPercent: 50
+  targetMemoryPercent: 70
+
+secret:
+  name: redis-secret

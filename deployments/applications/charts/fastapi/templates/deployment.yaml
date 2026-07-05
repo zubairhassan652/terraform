@@ -2,10 +2,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-fastapi
+  namespace: {{ .Release.Namespace }}
   labels:
     app: {{ .Release.Name }}-fastapi
 spec:
-  replicas: {{ .Values.replicaCount }}
+  {{- if not .Values.hpa.enabled }}
+  replicas: {{ .Values.replicaCount }}   # ← only set if HPA disabled
+  {{- end }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}-fastapi
@@ -24,9 +27,9 @@ spec:
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
-                  name: redis-secret     # ← secret name
-                  key: REDIS_URL         # ← key inside secret
-            
+                  name: {{ .Values.secret.name }}
+                  key: REDIS_URL
+          command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
           resources:
             requests:
               memory: {{ .Values.resources.requests.memory }}
@@ -34,3 +37,17 @@ spec:
             limits:
               memory: {{ .Values.resources.limits.memory }}
               cpu: {{ .Values.resources.limits.cpu }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3

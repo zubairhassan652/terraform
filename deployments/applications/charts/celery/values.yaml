@@ -4,7 +4,7 @@ image:
   pullPolicy: Always
 
 redis:
-  url: redis://redis-master.argocd.svc.cluster.local:6379/0
+  url: redis://redis-redis-service.argocd.svc.cluster.local:6379/0
 
 celeryApp: celery_app
 taskModule: tasks
@@ -45,6 +45,14 @@ flower:
     limits:
       memory: "128Mi"
       cpu: "100m"
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    host: flower.example.com
+    path: /
+    pathType: Prefix
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
 
 secret:
   name: redis-secret

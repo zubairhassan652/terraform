@@ -10,7 +10,12 @@ spec:
   source:
     repoURL: https://kedacore.github.io/charts
     chart: keda
-    targetRevision: 2.14.0
+    targetRevision: 2.14.2
+
+    helm:
+      values: |
+        crds:
+          install: true
 
   destination:
     server: https://kubernetes.default.svc
@@ -22,3 +27,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - Replace=true                # ← force replace CRDs if already exist

@@ -64,9 +64,11 @@ hpa:
 # ── KEDA (queue based — recommended) ─────────────────────────
 keda:
   enabled: true
-  minReplicas: 1           # scale to 0 when no tasks!
+  minReplicas: 1
   maxReplicas: 10
-  pollingInterval: 15      # check queue every 15 seconds
-  cooldownPeriod: 30       # wait 30s before scaling down
-  queueLength: 5           # scale up when queue has > 5 tasks
-  queue: celery            # default celery queue name in Redis
+  pollingInterval: 15
+  cooldownPeriod: 30
+  queueLength: 5
+  queue: celery
+  redisAddress: "redis-redis-service.argocd.svc.cluster.local:6379"
+  redisDatabase: "0"  

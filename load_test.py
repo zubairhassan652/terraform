@@ -4,7 +4,7 @@ import time
 import concurrent.futures
 
 BASE_URL = "http://fastapi.example.com"
-TASKS = 50
+TASKS = 500
 
 def submit_task(i):
     try:

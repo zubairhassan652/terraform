@@ -12,3 +12,14 @@
 
 # Remove minikube
 `minikube delete --all --purge`
+
+# Set envs
+
+```
+kubectl create secret generic redis-secret `
+  --from-literal=REDIS_URL="redis://redis-redis-service.argocd.svc.cluster.local:6379/0" `
+  --namespace argocd`
+```
+
+# Enable Metrics For Autoscaling
+`minikube addons enable metrics-server`

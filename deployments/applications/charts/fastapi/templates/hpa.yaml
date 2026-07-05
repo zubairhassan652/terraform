@@ -30,15 +30,19 @@ spec:
 
   behavior:
     scaleUp:
-      stabilizationWindowSeconds: 10
+      stabilizationWindowSeconds: 30
       policies:
         - type: Pods
           value: 2
           periodSeconds: 30
     scaleDown:
-      stabilizationWindowSeconds: 10
+      stabilizationWindowSeconds: 30    # ← reduced
       policies:
         - type: Pods
           value: 1
-          periodSeconds: 30
+          periodSeconds: 15             # ← faster scale down check
+        - type: Percent
+          value: 50                     # ← or scale down 50% at a time
+          periodSeconds: 15
+      selectPolicy: Min
 {{- end }}

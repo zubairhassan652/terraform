@@ -3,9 +3,8 @@ import requests
 import time
 import concurrent.futures
 
-BASE_URL = "http://localhost:8000"  # Change this to your FastAPI server URL
-# BASE_URL = "http://fastapi.example.com"
-TASKS = 500
+BASE_URL = "http://fastapi.example.com"
+TASKS = 50
 
 def submit_task(i):
     try:

@@ -1,0 +1,193 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki-stack
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: loki-stack
+    targetRevision: 2.10.2
+
+    helm:
+      values: |
+
+        # ── Loki ──────────────────────────────────────────────
+        loki:
+          enabled: true
+          persistence:
+            enabled: false
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          config:
+            auth_enabled: false
+            ingester:
+              chunk_idle_period: 3m
+              chunk_block_size: 262144
+              chunk_retain_period: 1m
+              max_transfer_retries: 0
+            limits_config:
+              enforce_metric_name: false
+              reject_old_samples: true
+              reject_old_samples_max_age: 168h
+            schema_config:
+              configs:
+                - from: "2020-10-24"
+                  store: boltdb-shipper
+                  object_store: filesystem
+                  schema: v11
+                  index:
+                    prefix: index_
+                    period: 24h
+            storage_config:
+              boltdb_shipper:
+                active_index_directory: /data/loki/index
+                cache_location: /data/loki/index_cache
+                shared_store: filesystem
+              filesystem:
+                directory: /data/loki/chunks
+            chunk_store_config:
+              max_look_back_period: 0s
+            table_manager:
+              retention_deletes_enabled: false
+              retention_period: 0s
+
+        # ── Promtail (log collector) ───────────────────────────
+        promtail:
+          enabled: true
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          config:
+            lokiAddress: http://loki-stack:3100/loki/api/v1/push
+
+        # ── Prometheus ────────────────────────────────────────
+        prometheus:
+          enabled: true
+          server:
+            retention: 7d
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "100m"
+              limits:
+                memory: "512Mi"
+                cpu: "200m"
+            persistentVolume:
+              enabled: false
+            ingress:
+              enabled: true
+              ingressClassName: nginx
+              hosts:
+                - prometheus.example.com
+              annotations:
+                nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+          alertmanager:
+            enabled: false
+          pushgateway:
+            enabled: false
+          nodeExporter:
+            enabled: true
+            resources:
+              requests:
+                memory: "32Mi"
+                cpu: "10m"
+              limits:
+                memory: "64Mi"
+                cpu: "50m"
+          kubeStateMetrics:
+            enabled: true
+
+        # ── Grafana ───────────────────────────────────────────
+        grafana:
+          enabled: true
+          adminPassword: "admin"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          persistence:
+            enabled: false
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            hosts:
+              - grafana.example.com
+            annotations:
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+          # ── Auto-configure datasources ─────────────────────
+          datasources:
+            datasources.yaml:
+              apiVersion: 1
+              datasources:
+                - name: Prometheus
+                  type: prometheus
+                  url: http://loki-stack-prometheus-server.monitoring.svc.cluster.local
+                  access: proxy
+                  isDefault: true
+                  editable: true
+
+                - name: Loki
+                  type: loki
+                  url: http://loki-stack.monitoring.svc.cluster.local:3100
+                  access: proxy
+                  editable: true
+
+          # ── Pre-load dashboards ────────────────────────────
+          dashboardProviders:
+            dashboardproviders.yaml:
+              apiVersion: 1
+              providers:
+                - name: default
+                  orgId: 1
+                  folder: ''
+                  type: file
+                  disableDeletion: false
+                  editable: true
+                  options:
+                    path: /var/lib/grafana/dashboards/default
+
+          dashboards:
+            default:
+              kubernetes-cluster:
+                gnetId: 7249
+                revision: 1
+                datasource: Prometheus
+              node-exporter:
+                gnetId: 1860
+                revision: 37
+                datasource: Prometheus
+              kubernetes-pods:
+                gnetId: 6417
+                revision: 1
+                datasource: Prometheus
+              loki-logs:
+                gnetId: 13639
+                revision: 2
+                datasource: Loki
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

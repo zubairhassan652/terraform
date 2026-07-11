@@ -33,8 +33,8 @@ spec:
       stabilizationWindowSeconds: 30
       policies:
         - type: Pods
-          value: 2
-          periodSeconds: 30
+          value: 1
+          periodSeconds: 15
     scaleDown:
       stabilizationWindowSeconds: 30    # ← reduced
       policies:
